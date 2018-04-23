@@ -6,7 +6,7 @@ import time
 from Image import fromstring 
 import vision_definitions
 from PIL import Image, ImageTk
-from Tkinter import Tk, Label, Toplevel
+from Tkinter import Tk, Label, Frame
 from wit import Wit
 
 
@@ -18,6 +18,8 @@ DEFAULT_IP = "192.168.1.145"
 NAME = None
 GETVOICE = None
 
+def move(event):
+    print(repr(event.char))
 
 class UpgradedBot():
     '''creates all the instances of ALBroker and ALProxy as parts of itself'''
@@ -406,13 +408,13 @@ class ViewVideo(UpgradedBot):
         '''
         #try:
         if __name__ == "__main__":
-            #try:
+            try:
                 tkinst = Tk()
-                subscriberID = self.vidproxy.subscribe("subscriberID", 0, 11, 10) # 0,11,10 is correct numbers
-                tkinst.geometry("640x480")
+                frame = Frame(tkinst, height = 640, width = 480)
+                frame.bind("<Key>",move)
+                frame.pack()
+                subscriberID = self.vidproxy.subscribe("subscriberID123", 0, 11, 10) # 0,11,10 is correct numbers
                 while True:
-                    for item in tkinst.slaves():
-                        item.destroy()
                     image = self.vidproxy.getImageRemote(subscriberID)
                     im = fromstring("RGB", (image[0], image[1]), str(bytearray(image[6])))
                     im.save(imagename+".jpg")
@@ -420,20 +422,18 @@ class ViewVideo(UpgradedBot):
                     showimage = ImageTk.PhotoImage(
                         Image.open(
                         imagename+".jpg").resize((image[0]*4, image[1]*4), Image.ANTIALIAS))
-                    #try:
-                    w = Label(tkinst, 
-                    image=showimage) # TODO WITH MULTIPLE BOTS RUNNING DEMO DOESNT WORK
+                    w = Label(frame, 
+                        image=showimage)
                     w.image = showimage
                     w.pack()
-                    #except Exception, e:
-                    #    print(e)
                     tkinst.update()
-            #except Exception, e:
-            #    print(str(e))
-            #    self.vidproxy.unsubscribe(subscriberID)
+                    w.destroy()
+            except Exception, e:
+                print(str(e))
+                self.vidproxy.unsubscribe(subscriberID)
         else:
             try:
-                subscriberID = self.vidproxy.subscribe("subscriberID10000", 0, 11, 10) # 0,11,10 is correct numbers
+                subscriberID = self.vidproxy.subscribe("subscriberID1000", 0, 11, 10) # 0,11,10 is correct numbers
                 image = self.vidproxy.getImageRemote(subscriberID)
                 self.vidproxy.unsubscribe(subscriberID)
                 im = fromstring("RGB", (160, 120), str(bytearray(image[6])))
@@ -653,7 +653,7 @@ def main():
     ViewVideo().run()
     #AdvancedMovement().onoff(False)
     #TextToSpeech().run("Test")
-    AdvancedMovement().onoff(False)
+    #AdvancedMovement().onoff(False)
     #LEDChanger().run()
     #FollowBall().run()
     #Demonstrations().speaking()

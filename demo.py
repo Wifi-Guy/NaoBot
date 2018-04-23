@@ -2,7 +2,7 @@
 import threading
 from upgradedBot import *
 from PIL import Image, ImageTk
-from Tkinter import Tk
+from Tkinter import Tk,  Frame, LEFT, RIGHT, Button#button for testing
 
 #TODO time sleep in bot
 BLUEIP = "192.168.1.146"#Theyll need editing lol
@@ -10,7 +10,7 @@ REDIP = "192.168.1.145"
 STAYVID = True
 redvidc = True
 
-usevid = True
+usevid = False
 
 class multibot:
     '''Creates a bot class to differentiate bots and pass items through from upgradedBot'''
@@ -24,9 +24,6 @@ class multibot:
             ViewVideo(robotip=self.robotip).run(imagename=self.colour)
         except Exception, e:
             print(str(e))
-
-    def move(self,distanceForward):
-        AdvancedMovement(robotip=self.robotip).move(distanceForward,0)
 
     def follow(self):
         FollowBall(robotip=self.robotip).run()
@@ -50,9 +47,10 @@ class multibot:
 blue = multibot(BLUEIP, "blue")
 red = multibot(REDIP, "red")
 
-def vidcontrol(tkinst):
+def vidcontrol(frame):
     try:
-        for item in tkinst.slaves():
+        for item in frame.slaves():
+
             item.destroy()
         showBlue = ImageTk.PhotoImage(
             Image.open(
@@ -60,16 +58,18 @@ def vidcontrol(tkinst):
         showRed = ImageTk.PhotoImage(
             Image.open(
             "red.jpg").resize((640, 480), Image.ANTIALIAS))
-        w = Label(tkinst, 
+        w = Label(frame, 
             image=showBlue) # TODO WITH MULTIPLE BOTS RUNNING DEMO DOESNT WORK
-        x = Label(tkinst, 
+        x = Label(frame, 
             image=showRed)
         w.image = showBlue
         x.image = showRed
 
-        w.pack()
-        x.pack()
+        w.pack(side=LEFT)
+        x.pack(side=RIGHT)
         tkinst.update()
+        w.destroy()
+        x.destroy()
     except Exception, e:
         print(str(e))
 
@@ -78,25 +78,25 @@ vidBot = [blue,red]
 
 
 def vid(tkinst):
-    #try:
-    while True:
-        for i in vidBot:
-            i.video()
+    try:
+        while True:
+            for i in vidBot:
+                i.video()
 
-        vidcontrol(tkinst)
-    #except:
-    #    pass
+            vidcontrol(tkinst)
+    except Exception, e:
+        print(str(e))
 
 def redtodo():
     try:
         '''Enter code for red down here'''
-       # red.stand()
+        red.stand()
         #for x in range(0,2):
         #red.move(1)#0.00625)
-        pass
+        #pass
 
         #red.stand()
-        #red.demo()
+        red.demo()
         #red.follow()
     except:
        pass
@@ -107,7 +107,7 @@ def bluetodo():
 
         blue.stand()
         #blue.move(1)
-        #blue.demo()
+        blue.demo()
         #blue.follow()
     except:
         pass
@@ -127,21 +127,60 @@ class myThread(threading.Thread):
         elif self.colour == "blue":
             bluetodo()
 
+tkinst = Tk()
+
+def redfoward(event):
+    red.walk(0.1,0)
+
+def redbackward(event):
+    red.walk(-0.1,0)
+
+def redleft(event):
+    red.walk(0,0,angle=20)
+
+def redright(event):
+    red.walk(0,0,angle=-20)
+
+def bluefoward(event):
+    blue.walk(0.1,0)
+
+def bluebackward(event):
+    blue.walk(-0.1,0)
+
+def blueleft(event):
+    blue.walk(0,0,angle=20)
+
+def blueright(event):
+    blue.walk(0,0,angle=-20)
+    
+tkinst.bind("w",redfoward)
+tkinst.bind("s",redbackward)
+tkinst.bind("a",redleft)
+tkinst.bind("d",redright)
+
+tkinst.bind("i",bluefoward)
+tkinst.bind("k",bluebackward)
+tkinst.bind("j",blueleft)
+tkinst.bind("l",blueright)
+
+frame = Frame(tkinst, height = 1000, width = 1280)
+
 
 if __name__ == "__main__":
     if usevid:
-        tkinst = Tk()
-        thread0 = myThread(0, "video", tkinst)
-        thread1 = myThread(1, "red")
-        thread2 = myThread(2, "blue")
+        thread0 = myThread(0, "video", frame)
+        #thread1 = myThread(1, "red")
+        #thread2 = myThread(2, "blue")
+
+        thread0.start()
+        thread0.join()
     else:
         thread1 = myThread(1, "red")
         thread2 = myThread(2, "blue")
 
-    thread0.start()
-    thread1.start()
-    thread2.start()
-    
-    thread0.join()
-    thread1.join()
-    thread2.join()
+        thread1.start()
+        thread2.start()
+        
+
+        thread1.join()
+        thread2.join()
