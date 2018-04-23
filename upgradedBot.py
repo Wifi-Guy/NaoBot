@@ -3,14 +3,16 @@ Upgrades on NaoBot API with a more user friendly and logical middleware
 '''
 import datetime
 import time
+from Image import fromstring 
 import vision_definitions
 from PIL import Image, ImageTk
-from Tkinter import Tk, Label
+from Tkinter import Tk, Label, Toplevel
 from wit import Wit
+
 
 from naoqi import ALModule
 
-DEFAULT_IP = "192.168.1.106"
+DEFAULT_IP = "192.168.1.145"
 #DEFAULT_IP = "169.254.65.171"
 
 NAME = None
@@ -42,7 +44,36 @@ class UpgradedBot():
                                                                  port)
         self.vidproxy = __import__("naoqi").ALProxy("ALVideoDevice", robotip, port)
         self.photocapproxy = __import__("naoqi").ALProxy("ALPhotoCapture", robotip, port)
+        self.posture = __import__("naoqi").ALProxy("ALRobotPosture", robotip, port)
+        self.tracker = __import__("naoqi").ALProxy("ALTracker", robotip, port)
+        self.local = __import__("naoqi").ALProxy("ALLocalization", robotip, port)
         self.memory = __import__("naoqi").ALProxy("ALMemory")
+
+
+class FollowBall(UpgradedBot):
+    '''Will instruct NaoBot to follow ball'''
+    @staticmethod
+    def help():
+        '''returns basic help text for the class'''
+        return '''
+        run()
+        bot tracks target for 10 seconds
+        '''
+    def run(self):
+        #self.local.learnHome()
+        print("\n\n\n\n------------TRACK CHECKING-------------\n\n\n\n")
+        self.tracker.registerTarget("RedBall",0.06)
+        print("\n\n\n\n------------TARGET MARKED-------------\n\n\n\n")
+        self.tracker.setMode("Move")
+        self.tracker.track("RedBall")
+        try:
+            while  True:
+                time.sleep(0.1)
+        except:
+            print("Stopping")
+            self.tracker.stopTracker()
+            self.tracker.unregisterAllTargets()
+            #self.local.goToHome()
 
 
 class TextToSpeech(UpgradedBot):
@@ -66,7 +97,7 @@ class TextToSpeech(UpgradedBot):
         :commandList
         -cur_bat- reads current battery
         -kill_sys- stops system
-        -cur_time_ reads current time
+        -cur_time- reads current time
         '''
         if str(text[:7]) == str("cur_bat"):
             self.texttospeechproxy.say("Battery"+str(self.batteryproxy.getBatteryCharge())+"%")
@@ -158,6 +189,22 @@ class LEDChanger(UpgradedBot):
 
 class AdvancedMovement(UpgradedBot):
     '''more advanced wrapper for movement'''
+    def move(self, forward, left, angle=0):#TODO jumping issues
+        '''
+        :param forward: float how many steps forward to move bot, takes negative for reverse
+        :type forward: float
+
+        :param left: float how many steps left to move bot, takes negative for reverse
+        :type left: float
+
+        :param angle: float angle to face bot on move
+        :type angle: float
+        '''
+        if angle%360 == 0:
+            angle = 0
+        if angle != 0:
+            angle = __import__("math").pi/angle
+        self.motionproxy.moveTo(forward, left, angle)
 
     def run(self, movementlist, speed=0.2): # a logical slightly simplified wrapper for ALMotion
         '''
@@ -348,10 +395,8 @@ class GetUserVoice(ALModule):
 
 
 class ViewVideo(UpgradedBot):
-    '''views stream from bots TODO doesnt work
-    image function/open tkinter doesnt work'''
-
-    def run(self, robotip=DEFAULT_IP, port=9559):  # Opens a tkinter window showing application
+    '''views stream from bots'''
+    def run(self, robotip=DEFAULT_IP, imagename="image", port=9559):  # Opens a tkinter window showing application
         '''
         :param robotip: ip of bot
         :type: string
@@ -359,23 +404,43 @@ class ViewVideo(UpgradedBot):
         :param port: port of bot on ip
         :type: int
         '''
-        root = Tk()
-        root.geometry("1000x1000")
-        self.photocapproxy.takePicture("/var/persistent/home/nao", "image.jpg")
-        session = __import__("ftplib").FTP(robotip, "nao", "nao")
-        session.retrbinary("RETR image.jpg", open("image.jpg", "wb").write)
-        while True:
-            for item in root.slaves():
-                item.destroy()
-            self.photocapproxy.takePicture("/var/persistent/home/nao", "image.jpg")
-            #time.sleep(0.2)
-            session = __import__("ftplib").FTP(robotip, "nao", "nao")
-            session.retrbinary("RETR image.jpg", open("image.jpg", "wb").write)
-            showimage = ImageTk.PhotoImage(Image.open("image.jpg"))
-            w = Label(root, image=showimage)
-            w.image = showimage
-            w.pack()
-            root.update()
+        #try:
+        if __name__ == "__main__":
+            #try:
+                tkinst = Tk()
+                subscriberID = self.vidproxy.subscribe("subscriberID", 0, 11, 10) # 0,11,10 is correct numbers
+                tkinst.geometry("640x480")
+                while True:
+                    for item in tkinst.slaves():
+                        item.destroy()
+                    image = self.vidproxy.getImageRemote(subscriberID)
+                    im = fromstring("RGB", (image[0], image[1]), str(bytearray(image[6])))
+                    im.save(imagename+".jpg")
+
+                    showimage = ImageTk.PhotoImage(
+                        Image.open(
+                        imagename+".jpg").resize((image[0]*4, image[1]*4), Image.ANTIALIAS))
+                    #try:
+                    w = Label(tkinst, 
+                    image=showimage) # TODO WITH MULTIPLE BOTS RUNNING DEMO DOESNT WORK
+                    w.image = showimage
+                    w.pack()
+                    #except Exception, e:
+                    #    print(e)
+                    tkinst.update()
+            #except Exception, e:
+            #    print(str(e))
+            #    self.vidproxy.unsubscribe(subscriberID)
+        else:
+            print("none main loop activated")
+            try:
+                subscriberID = self.vidproxy.subscribe("subscriberID10000", 0, 11, 10) # 0,11,10 is correct numbers
+                image = self.vidproxy.getImageRemote(subscriberID)
+                self.vidproxy.unsubscribe(subscriberID)
+                im = fromstring("RGB", (160, 120), str(bytearray(image[6])))
+                im.save(imagename+".jpg")
+            except Exception, e:
+                print(str(e))
 
 
 class PlayMusic(UpgradedBot):
@@ -426,8 +491,8 @@ class Demonstrations:
     def lightshow(ip=DEFAULT_IP):
         '''test leds then has speaking'''
         LEDChanger(robotip=ip).run(changetime=1)
-        Demonstrations(robotip=ip).brainleds(1)
-        Demonstrations(robotip=ip).speaking()
+        Demonstrations().brainleds(1)
+        Demonstrations().speaking()
 
     @staticmethod
     def playmusic(ip=DEFAULT_IP):
@@ -586,10 +651,12 @@ def ttswork():
 def main():
     '''Programs main, contains demo program + currently not working programs'''
 
-    #ViewVideo().run()
+    ViewVideo().run()
     #AdvancedMovement().onoff(False)
-    TextToSpeech().run("Test")
+    #TextToSpeech().run("Test")
     AdvancedMovement().onoff(False)
+    #LEDChanger().run()
+    #FollowBall().run()
     #Demonstrations().speaking()
     #print(VoiceGet().run())
     #Demonstrations().alltogethernow()
