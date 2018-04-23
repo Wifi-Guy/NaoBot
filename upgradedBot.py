@@ -432,7 +432,6 @@ class ViewVideo(UpgradedBot):
             #    print(str(e))
             #    self.vidproxy.unsubscribe(subscriberID)
         else:
-            print("none main loop activated")
             try:
                 subscriberID = self.vidproxy.subscribe("subscriberID10000", 0, 11, 10) # 0,11,10 is correct numbers
                 image = self.vidproxy.getImageRemote(subscriberID)

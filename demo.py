@@ -9,7 +9,6 @@ BLUEIP = "192.168.1.146"#Theyll need editing lol
 REDIP = "192.168.1.145"
 STAYVID = True
 redvidc = True
-bluevidc = True
 
 usevid = True
 
@@ -21,32 +20,10 @@ class multibot:
         self.colour = colour
 
     def video(self):
-        print("videorunn")
-        ViewVideo(robotip=self.robotip).run(imagename=self.colour)
-
-    
-    def vidcontrol(self, tkinst):
-        print("vidcrunn")
         try:
-            showBlue = ImageTk.PhotoImage(
-                Image.open(
-                "blue.jpg").resize((640, 480), Image.ANTIALIAS))
-            showRed = ImageTk.PhotoImage(
-                Image.open(
-                "red.jpg").resize((640, 480), Image.ANTIALIAS))
+            ViewVideo(robotip=self.robotip).run(imagename=self.colour)
         except Exception, e:
             print(str(e))
-        #try:
-        w = Label(tkinst, 
-            image=showBlue) # TODO WITH MULTIPLE BOTS RUNNING DEMO DOESNT WORK
-        x = Label(tkinst, 
-            image=showRed)
-        w.image = showBlue
-        x.image = showRed
-
-        w.pack()
-        x.pack()
-        tkinst.update()
 
     def move(self,distanceForward):
         AdvancedMovement(robotip=self.robotip).move(distanceForward,0)
@@ -73,80 +50,98 @@ class multibot:
 blue = multibot(BLUEIP, "blue")
 red = multibot(REDIP, "red")
 
-def redvid(tkinst):
-    #try:
-    while True:
+def vidcontrol(tkinst):
+    try:
         for item in tkinst.slaves():
             item.destroy()
-        red.video()
-        red.vidcontrol(tkinst)
-    #except:
-    #    pass
+        showBlue = ImageTk.PhotoImage(
+            Image.open(
+            "blue.jpg").resize((640, 480), Image.ANTIALIAS))
+        showRed = ImageTk.PhotoImage(
+            Image.open(
+            "red.jpg").resize((640, 480), Image.ANTIALIAS))
+        w = Label(tkinst, 
+            image=showBlue) # TODO WITH MULTIPLE BOTS RUNNING DEMO DOESNT WORK
+        x = Label(tkinst, 
+            image=showRed)
+        w.image = showBlue
+        x.image = showRed
 
-def bluevid(tkinst):
+        w.pack()
+        x.pack()
+        tkinst.update()
+    except Exception, e:
+        print(str(e))
+
+vidBot = [blue,red]
+
+
+
+def vid(tkinst):
     #try:
     while True:
-        blue.video()
-        blue.vidcontrol(tkinst)
+        for i in vidBot:
+            i.video()
+
+        vidcontrol(tkinst)
     #except:
     #    pass
 
 def redtodo():
     try:
         '''Enter code for red down here'''
-        #red.move(1)
-        #red.sit()
+       # red.stand()
+        #for x in range(0,2):
+        #red.move(1)#0.00625)
+        pass
+
         #red.stand()
         #red.demo()
         #red.follow()
-        pass
     except:
        pass
 
 def bluetodo():
     try:
         '''Enter code for blue down here'''
+
+        blue.stand()
         #blue.move(1)
-        #blue.stand()
         #blue.demo()
         #blue.follow()
-        pass
     except:
         pass
 
 class myThread(threading.Thread):
     '''creates threads for use'''
-    def __init__(self, threadID, colour, video=False, tkinst = None):
+    def __init__(self, threadID, colour, tkinst = None):
         threading.Thread.__init__(self)
         self.threadID = threadID
         self.colour = colour
-        self.video = video
         self.tkinst = tkinst
     def run(self):
-        if self.video:
-            if self.colour =="red":
-                redvid(self.tkinst)
-
-            elif self.colour == "blue":
-                bluevid(self.tkinst)
-
-        else:
-            if self.colour == "red":
-                redtodo()
-            elif self.colour == "blue":
-                bluetodo()
+        if self.colour == "video":
+            vid(tkinst)
+        if self.colour == "red":
+            redtodo()
+        elif self.colour == "blue":
+            bluetodo()
 
 
 if __name__ == "__main__":
     if usevid:
         tkinst = Tk()
-        thread1 = myThread(1, "red", True, tkinst)
-        thread2 = myThread(2, "blue", True, tkinst)
+        thread0 = myThread(0, "video", tkinst)
+        thread1 = myThread(1, "red")
+        thread2 = myThread(2, "blue")
     else:
         thread1 = myThread(1, "red")
         thread2 = myThread(2, "blue")
+
+    thread0.start()
     thread1.start()
     thread2.start()
     
+    thread0.join()
     thread1.join()
     thread2.join()
