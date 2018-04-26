@@ -71,7 +71,7 @@ The bot supports streaming video from the cameras on it. This is done using ```V
 
 The bot supports voice recording and voice recognition, however the voice recognition is spotting based, meaning that the command will only trigger on certian words. This can be used with ```VoiceRecognition().run(vocabulary, wordspotting=False, waittime=3)``` which will change the global NAME if a word is detected. Due to issues with this one, a more advanced one using getting audio and sending it off to an external server was devised, called voice get. This can be initialised using ```VoiceGet().run(wordlist=None, sleepTime=5, robotip=DEFAULT_IP, port= 9559)```. which will get audio, stream it to an external free service called wit and return a list of words found
 
-##Demo
+## Demo
 
 **Dependencies**
 
