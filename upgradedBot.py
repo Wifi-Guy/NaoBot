@@ -17,9 +17,7 @@ DEFAULT_IP = "192.168.1.145"
 
 NAME = None
 GETVOICE = None
-
-def move(event):
-    print(repr(event.char))
+ReactToTouch = None
 
 class UpgradedBot():
     '''creates all the instances of ALBroker and ALProxy as parts of itself'''
@@ -52,17 +50,16 @@ class UpgradedBot():
         self.memory = __import__("naoqi").ALProxy("ALMemory")
 
 
-class FollowBall(UpgradedBot):
+class FollowBall(UpgradedBot):#TODO not working fully
     '''Will instruct NaoBot to follow ball'''
     @staticmethod
     def help():
         '''returns basic help text for the class'''
         return '''
         run()
-        bot tracks target for 10 seconds
+        bot tracks target until program is killed
         '''
     def run(self):
-        #self.local.learnHome()
         print("\n\n\n\n------------TRACK CHECKING-------------\n\n\n\n")
         self.tracker.registerTarget("RedBall",0.06)
         print("\n\n\n\n------------TARGET MARKED-------------\n\n\n\n")
@@ -75,7 +72,6 @@ class FollowBall(UpgradedBot):
             print("Stopping")
             self.tracker.stopTracker()
             self.tracker.unregisterAllTargets()
-            #self.local.goToHome()
 
 
 class TextToSpeech(UpgradedBot):
@@ -133,8 +129,6 @@ class LEDChanger(UpgradedBot):
         '''
 
         if ledlist is None:
-            #self.ledproxy.rasta(changetime)
-            #self.ledproxy.randomEyes(changetime)
             self.ledproxy.setIntensity("LeftFaceLedsRed", 1)
             self.ledproxy.setIntensity("LeftFaceLedsGreen", 0)
             self.ledproxy.setIntensity("LeftFaceLedsBlue", 0)
@@ -150,6 +144,8 @@ class LEDChanger(UpgradedBot):
             self.ledproxy.setIntensity("RightFaceLedsRed", 0.407843137)
             self.ledproxy.setIntensity("RightFaceLedsGreen", 0.0549019608)
             self.ledproxy.setIntensity("RightFaceLedsBlue", 0.839215686)'''
+        elif ledlist == "rasta":
+            self.ledproxy.rasta(changetime)
         else:
             for item in ledlist:
                 if isinstance(item[0], int):
@@ -298,6 +294,10 @@ class VoiceGet(UpgradedBot):
     def run(self, wordList=None, sleepTime=5, robotip=DEFAULT_IP, port=9559):
         '''Records audio, sends the audio to wit and returns the text'''
         client = Wit("UAWHDAJAR6GF6M7S7EA43OAO7KPUO4WW")
+        try:
+            self.audiorecorderproxy.stopMicrophonesRecording()
+        except BaseException, e:
+            print(str(e))
         self.audiorecorderproxy.startMicrophonesRecording("/var/persistent/home/nao/recordFile.wav",
                                                           "wav", 16000, [0, 0, 1, 0])
         time.sleep(sleepTime)
@@ -311,8 +311,9 @@ class VoiceGet(UpgradedBot):
         if wordList is None:
             return resp
         returnList = []
+        print(resp)
         for item in str(resp).split(" "):
-            if isinstance(item, wordList):
+            if item in wordList:
                 returnList.append(item)
         return returnList
 
@@ -328,72 +329,43 @@ class VoiceRecognition(UpgradedBot):
             self.voicerecognitionproxy.pause(True)
             self.voicerecognitionproxy.setVocabulary(vocabulary, wordspotting)
             self.voicerecognitionproxy.pause(False)
-        except BaseException:
-            print("ERR_VOCAB:voicerecognition-run")
+        except BaseException, e:
+            print(str(e))
         try:
             self.voicerecognitionproxy.subscribe("recognisedWord")
-        except BaseException:
-            print("ERR1:voicerecognition-run")
+        except BaseException, e:
+            print(str(e))
         try:
             global GETVOICE
             if GETVOICE is None:
                 GETVOICE = GetUserVoice("GETVOICE")
             time.sleep(waittime)
-        except BaseException:
-            print("ERR_GLOBAL:voicerecognition-run")
+        except BaseException, e:
+            print(str(e))
         try:
             self.memory.unsubscribeToEvent("WordRecognized", "GETVOICE")
-        except BaseException:
-            print("ERR_EVENT:voicerecognition-run")
+        except BaseException, e:
+            print(str(e))
         try:
             self.voicerecognitionproxy.unsubscribe("recognisedWord")
-        except BaseException:
-            print("ERR_UNSUB:voicerecognition-run")
+        except BaseException, e:
+            print(str(e))
         try:
             GETVOICE = None
-        except BaseException:
-            print("ERR_DEL:voicerecognition-run")
+        except BaseException, e:
+            print(str(e))
         return True
 
     def unsub(self):
         '''tries to unsubscribe all events from bot'''
         try:
             self.memory.unsubscribeToEvent("WordRecognized", "GETVOICE")
-            print("UNSUB:VR-UNSUB")
-        except BaseException:
-            print("ERR_EVENT:voicerecognition-unsub")
+        except BaseException, e:
+            print(str(e))
         try:
             self.voicerecognitionproxy.unsubscribe("recognisedWord")
-        except BaseException:
-            print("ERR_UNSUB:voicerecognition-unsub")
-
-
-class GetUserVoice(ALModule):
-    '''This is a ALModule python object **DO NOT USE**'''
-
-    def __init__(self, NAME):
-        ALModule.__init__(self, NAME)
-        try:
-            upgradedBot().memory.unsubscribeToEvent("WordRecognized", "GETVOICE")
-            print("UNSUB:GUV-init")
-        except BaseException:
-            print("ERR_EVENT:GUV-init")
-        upgradedBot().memory.subscribeToEvent("WordRecognized", "GETVOICE", "onwordrecognized")
-
-    @staticmethod
-    def onwordrecognized(event, value, other):
-        '''changes global name to recognised word'''
-        global NAME
-        NAME = value[0]
-
-    @staticmethod
-    def unsub():
-        '''unsubcribes event from bot'''
-        try:
-            upgradedBot().memory.unsubscribeToEvent("WordRecognized", "GETVOICE")
-            print("UNSUB:GUV-unsub")
-        except BaseException:
-            print("ERR_EVENT:GUV-unsub")
+        except BaseException, e:
+            print(str(e))
 
 
 class ViewVideo(UpgradedBot):
@@ -413,7 +385,7 @@ class ViewVideo(UpgradedBot):
                 frame = Frame(tkinst, height = 640, width = 480)
                 frame.bind("<Key>",move)
                 frame.pack()
-                subscriberID = self.vidproxy.subscribe("subscriberID123", 0, 11, 10) # 0,11,10 is correct numbers
+                subscriberID = self.vidproxy.subscribe("subscriberID", 0, 11, 10) # 0,11,10 is correct numbers
                 while True:
                     image = self.vidproxy.getImageRemote(subscriberID)
                     im = fromstring("RGB", (image[0], image[1]), str(bytearray(image[6])))
@@ -433,7 +405,7 @@ class ViewVideo(UpgradedBot):
                 self.vidproxy.unsubscribe(subscriberID)
         else:
             try:
-                subscriberID = self.vidproxy.subscribe("subscriberID1000", 0, 11, 10) # 0,11,10 is correct numbers
+                subscriberID = self.vidproxy.subscribe("subscriberID", 0, 11, 10) # 0,11,10 is correct numbers
                 image = self.vidproxy.getImageRemote(subscriberID)
                 self.vidproxy.unsubscribe(subscriberID)
                 im = fromstring("RGB", (160, 120), str(bytearray(image[6])))
@@ -462,6 +434,57 @@ class PlayMusic(UpgradedBot):
         session.quit()
         temp = self.audioproxy.loadFile("/var/persistent/home/nao/file.wav")
         self.audioproxy.play(temp)
+
+
+class GetUserVoice(ALModule):
+    '''This is a ALModule python object **DO NOT USE**'''
+
+    def __init__(self, NAME):
+        ALModule.__init__(self, NAME)
+        try:
+            UpgradedBot().memory.unsubscribeToEvent("WordRecognized", "GETVOICE")
+        except BaseException, e:
+            print(str(e))
+        UpgradedBot().memory.subscribeToEvent("WordRecognized", "GETVOICE", "onwordrecognized")
+
+    @staticmethod
+    def onwordrecognized(event, value, other):
+        '''changes global name to recognised word'''
+        global NAME
+        NAME = value[0]
+        print("\n\n\n\n\n\n",NAME)
+
+    @staticmethod
+    def unsub():
+        '''unsubcribes event from bot'''
+        try:
+            upgradedBot().memory.unsubscribeToEvent("WordRecognized", "GETVOICE")
+        except BaseException, e:
+            print(str(e))
+
+
+class TouchDetect(ALModule):
+    def __init__(self,name):
+        ALModule.__init__(self,name)
+        try:
+            UpgradedBot().memory.subscribeToEvent("TouchChanged",
+            "ReactToTouch", "onTouched")
+        except BaseException, e:
+            print(str(e))
+            memory.unsubscribeToEvent("TouchChanged",
+                "ReactToTouch")
+            try:
+                UpgradedBot().memory.subscribeToEvent("TouchChanged",
+                    "ReactToTouch", "onTouched")
+            except BaseException, e:
+                print(str(e))
+            
+    def onTouched(self, uknwn, value):
+        memory.unsubscribeToEvent("TouchChanged",
+            "ReactToTouch")
+        for x in value:
+            if x[1]:
+                TextToSpeech().run(x[0])
 
 
 class Demonstrations:
@@ -573,21 +596,6 @@ class Demonstrations:
         ViewVideo(robotip=ip).run()
 
     @staticmethod
-    def powernap(ip=DEFAULT_IP):
-        '''moves into shutdown position without shutdown **DOESNT WORK DO NOT USE**'''
-        AdvancedMovement(robotip=ip).run([#["HeadYaw", -0.009246],["HeadPitch", 0.085862],
-                                #["LShoulderPitch", 1.420442],["LShoulderRoll", 0.165630],
-                                # ["LElbowYaw", -0.803858],
-                                #["LElbowRoll", -1.058418],["LWristYaw", 0.136484],
-                                # ["LHipYawPitch", -0.250000],
-            ["LHipRoll", -0.082794], ["LHipPitch", -0.705598], ["LKneePitch", 2.112546],
-            ["LAnklePitch", -1.189442], ["LAnkleRoll", 0.075016], ["RHipYawPitch", -0.250000],
-            ["RHipRoll", 0.079810], ["RHipPitch", -0.701080], ["RKneePitch", 2.112546],
-            ["RAnklePitch", -1.186300], ["RAnkleRoll", -0.075870], ["RShoulderPitch", 1.451206],
-            ["RShoulderRoll", -0.170316], ["RElbowYaw", 0.797638], ["RElbowRoll", 1.047764],
-            ["RWristYaw", -0.121228], ["LHand", 0.016800], ["RHand", 0.014000]])
-
-    @staticmethod
     def alltogethernow(ip=DEFAULT_IP):
         '''demonstration of connected space'''
         tts = TextToSpeech(robotip=ip)
@@ -640,7 +648,11 @@ def ttswork():
     tts = TextToSpeech()
     voicerecog = VoiceRecognition()
     Demonstrations().shutdown()
-    tts.run("Hello, I'm Nao, whats your NAME?")
+
+    # notes for work next week
+    # text to speech working more approximately
+    # barcode reader (probs easier)
+    # read and intro data from text files (easy time)
 
     voicerecog.run(["Matt", "Tim", "Dale", "Also Tim"], waittime=5)##TODO giant list of names
     while NAME is None:
@@ -649,16 +661,7 @@ def ttswork():
 
 def main():
     '''Programs main, contains demo program + currently not working programs'''
-
-    ViewVideo().run()
-    #AdvancedMovement().onoff(False)
-    #TextToSpeech().run("Test")
-    #AdvancedMovement().onoff(False)
-    #LEDChanger().run()
-    #FollowBall().run()
-    #Demonstrations().speaking()
-    #print(VoiceGet().run())
-    #Demonstrations().alltogethernow()
+    print(VoiceGet().run(["Hello","Matt","Test"]))
 
 if __name__ == "__main__":
     main()
