@@ -83,7 +83,7 @@ This program extends upgradedBot to allow for use with multiple bots and remote 
 
 It uses a class containing all of the imported commands from upgradedBot, which are:
 
-video - allows video control, follow - allows following the ball, tts - text to speech, demo - the demo of the connected space, stand - makes the bot stand up, sit - makes the bot sit down, walk - moves the bot forward backward left and right
+```video()``` - allows video control, ```follow()``` - allows following the ball, ```tts()``` - text to speech, ```demo()``` - the demo of the connected space, ```stand()``` - makes the bot stand up, ```sit()``` - makes the bot sit down, ```walk()``` - moves the bot forward backward left and right
 
 More advanced information about these is available in upgradedBot
 
