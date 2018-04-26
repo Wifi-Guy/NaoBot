@@ -79,6 +79,8 @@ To run this code, you are required to have:
 
 threading, upgradedBot, PIL and Tkinter as well as all the dependicies listed in upgradedBot
 
+**Code Functions**
+
 This program extends upgradedBot to allow for use with multiple bots and remote control.
 
 It uses a class containing all of the imported commands from upgradedBot, which are:
