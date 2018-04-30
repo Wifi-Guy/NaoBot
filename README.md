@@ -38,7 +38,7 @@ Provides a basic set of demonstrations that the bot can use:
   
   ```alltogethernow``` gives a demonstration of the connected space
   
-  ```ttswork``` a working text to speech system with names
+  ```entrance``` the bot will ask people their names and then greet them at the entrance, about 80% accurate
 
 Any of these pieces of code can be ran by importing upgradedBot and running them:
 
