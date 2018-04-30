@@ -5,7 +5,7 @@
 
 To run this code, it is required to have:
 
-datetime, time, Image, vision_definitions. PIL, Tkinter, wit
+datetime, time, Image, vision_definitions. PIL, Tkinter, wit,difflib
 
 Note that most of these are already built into Python2, however it is recommended to use Anaconda (this project was created using Anaconda 4.4.0)
 
@@ -37,6 +37,8 @@ Provides a basic set of demonstrations that the bot can use:
   ```viewVideo``` opens a Tkinter window and streams video from the bot
   
   ```alltogethernow``` gives a demonstration of the connected space
+  
+  ```ttswork``` a working text to speech system with names
 
 Any of these pieces of code can be ran by importing upgradedBot and running them:
 
@@ -70,6 +72,10 @@ The bot also supports text to speech functionality, which makes up the majority 
 The bot supports streaming video from the cameras on it. This is done using ```ViewVideo().run()``` which will create a tkinter instance displaying images streamed off the bot at an approximately 0.3 second delay
 
 The bot supports voice recording and voice recognition, however the voice recognition is spotting based, meaning that the command will only trigger on certian words. This can be used with ```VoiceRecognition().run(vocabulary, wordspotting=False, waittime=3)``` which will change the global NAME if a word is detected. Due to issues with this one, a more advanced one using getting audio and sending it off to an external server was devised, called voice get. This can be initialised using ```VoiceGet().run(wordlist=None, sleepTime=5, robotip=DEFAULT_IP, port= 9559)```. which will get audio, stream it to an external free service called wit and return a list of words found
+
+****Texttospeech is a newer addition with working tts capabilities****
+
+This works using the wit based voice get system, however using difflib to differentiate between words accurately. Please note it will not differentiate in some scenarios, for example if "dale" is said, but "alex" is written in the detect list, the program will trigger on alex, which is impossible to easily fix
 
 ## Demo
 
