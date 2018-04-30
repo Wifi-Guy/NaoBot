@@ -1,4 +1,0 @@
-- [x] Bots will demonstrate different areas (just speaking)
-- [x] Red will detect voices and repeat them
-- [x] Blue will point at items in the connected space
-- [ ] Red will have a barcode reader
