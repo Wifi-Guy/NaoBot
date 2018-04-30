@@ -8,7 +8,7 @@ import vision_definitions
 from PIL import Image, ImageTk
 from Tkinter import Tk, Label, Frame
 from wit import Wit
-
+from difflib import get_close_matches
 
 from naoqi import ALModule
 
@@ -625,6 +625,24 @@ class Demonstrations:
         Demonstrations().shutdown(False, ip=ip)
 
     @staticmethod
+    def entrance(ip=DEFAULT_IP):
+        Demonstrations().shutdown(False)
+        Demonstrations().startup(False)
+        tts = TextToSpeech()
+        personname = None
+        cont = False
+        tts.run("Hello, what is your name")
+        while not cont:
+            try:
+                personname = ttswork()[0]
+                cont = True
+            except:
+                tts.run("Please repeat your name")
+        tts.run("Hello "+personname+" and welcome to the tech hub")
+        AdvancedMovement().run([["RShoulderRoll",-1.2]])
+        tts.run("if you head over there to your right and go into the connected space, you will find my friend Robbie the robot demonstrating in there")
+
+    @staticmethod
     def help():
         '''returns basic help text for the class'''
         return'''
@@ -642,26 +660,34 @@ class Demonstrations:
             Returns this help information
         '''
 
+def barcodereader():
+    pass
 
 def ttswork():
-    '''demonstrates text to speech'''
-    tts = TextToSpeech()
+    '''a working implementation of text to speech, with name detection'''
     voicerecog = VoiceRecognition()
-    Demonstrations().shutdown()
+    
 
     # notes for work next week
-    # text to speech working more approximately
+    # text to speech working more approximately [works ish]
     # barcode reader (probs easier)
     # read and intro data from text files (easy time)
+    voice = str(VoiceGet().run(sleepTime=2))
+    print(voice)
+    peoplelist = ["Name","Matt","Sarah","Jamie","John","Dale", "Alex"] ##TODO giant list of names
+    retlist = []
+    for x  in voice.split(" "):
+        retlist.append(get_close_matches(x,peoplelist,cutoff=0.35)) # Need a quiet room, and accurate
+    print(retlist)
+    for li in retlist:
+        if len(li) > 0:
+            if li[0] != "Name":
+                return li
 
-    voicerecog.run(["Matt", "Tim", "Dale", "Also Tim"], waittime=5)##TODO giant list of names
-    while NAME is None:
-        pass
-    tts.run(str("Hello "+NAME+" Welcome to the computing department"))
+
 
 def main():
     '''Programs main, contains demo program + currently not working programs'''
-    print(VoiceGet().run(["Hello","Matt","Test"]))
-
+    Demonstrations().entrance()
 if __name__ == "__main__":
     main()
