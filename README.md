@@ -79,6 +79,9 @@ The bot supports streaming video from the cameras on it. This is done using ```V
 
 The bot supports voice recording and voice recognition, however the voice recognition is spotting based, meaning that the command will only trigger on certian words. This can be used with ```VoiceRecognition().run(vocabulary, wordspotting=False, waittime=3)``` which will change the global NAME if a word is detected. Due to issues with this one, a more advanced one using getting audio and sending it off to an external server was devised, called voice get. This can be initialised using ```VoiceGet().run(wordlist=None, sleepTime=5, robotip=DEFAULT_IP, port= 9559)```. which will get audio, stream it to an external free service called wit and return a list of words found
 
+The bot now supports tactile button detection using ```detecttouch(deflist)```, where deflist can either be None or a 2d array in this format: 
+[[definition_to_run_without_brackets,the_button press it works on]]
+
 ****Texttospeech is a newer addition with working tts capabilities****
 
 This works using the wit based voice get system, however using difflib to differentiate between words accurately. Please note it will not differentiate in some scenarios, for example if "dale" is said, but "alex" is written in the detect list, the program will trigger on alex, which is impossible to easily fix

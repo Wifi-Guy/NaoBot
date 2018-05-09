@@ -12,7 +12,7 @@ from difflib import get_close_matches
 
 from naoqi import ALModule
 
-DEFAULT_IP = "192.168.1.145"
+DEFAULT_IP = "192.168.1.125"
 #DEFAULT_IP = "169.254.65.171"
 
 NAME = None
@@ -48,6 +48,7 @@ class UpgradedBot():
         self.tracker = __import__("naoqi").ALProxy("ALTracker", robotip, port)
         self.local = __import__("naoqi").ALProxy("ALLocalization", robotip, port)
         self.memory = __import__("naoqi").ALProxy("ALMemory")
+        self.awarenessproxy = __import__("naoqi").ALProxy("ALBasicAwareness", robotip, port)
 
 
 class FollowBall(UpgradedBot):#TODO not working fully
@@ -307,6 +308,7 @@ class VoiceGet(UpgradedBot):
         start = time.time()
         with open("recordFile.wav", "rb") as f:
             resp = client.speech(f, None, {"Content-Type":"audio/wav"})
+            f.close()
         resp = (str(resp).split("_text': u")[1])[1:-2]
         if wordList is None:
             return resp
@@ -316,6 +318,11 @@ class VoiceGet(UpgradedBot):
             if item in wordList:
                 returnList.append(item)
         return returnList
+
+
+class BarCodeReader(UpgradedBot):
+    def run(self):
+        self.awarenessproxy.stopAwareness()
 
 
 class VoiceRecognition(UpgradedBot):
@@ -464,14 +471,19 @@ class GetUserVoice(ALModule):
 
 
 class TouchDetect(ALModule):
-    def __init__(self,name):
+    def __init__(self,name,deflist=None):
+        '''
+        deflist - 2darray
+        Each instance contains a trigger and a function to trigger on this (has to be a standalone function (def))
+        '''
+        self.deflist = deflist
         ALModule.__init__(self,name)
         try:
             UpgradedBot().memory.subscribeToEvent("TouchChanged",
             "ReactToTouch", "onTouched")
         except BaseException, e:
             print(str(e))
-            memory.unsubscribeToEvent("TouchChanged",
+            UpgradedBot().memory.unsubscribeToEvent("TouchChanged",
                 "ReactToTouch")
             try:
                 UpgradedBot().memory.subscribeToEvent("TouchChanged",
@@ -480,11 +492,27 @@ class TouchDetect(ALModule):
                 print(str(e))
             
     def onTouched(self, uknwn, value):
-        memory.unsubscribeToEvent("TouchChanged",
+        UpgradedBot().memory.unsubscribeToEvent("TouchChanged",
             "ReactToTouch")
+        cont = False
         for x in value:
             if x[1]:
-                TextToSpeech().run(x[0])
+                if self.deflist != None:
+                    for y in self.deflist:
+                        print(x[0][:len(y[1])])
+                        if y[1].lower() == x[0][:len(y[1])].lower() and not cont:
+                            try:
+                                y[0]()
+                                cont = True
+                            except BaseException, e:
+                                print(str(e))
+
+                print(x[0])
+        UpgradedBot().memory.subscribeToEvent("TouchChanged",
+            "ReactToTouch", "onTouched")
+    def end(self):
+        UpgradedBot().memory.unsubscribeToEvent("TouchChanged",
+            "ReactToTouch")
 
 
 class Demonstrations:
@@ -660,18 +688,10 @@ class Demonstrations:
             Returns this help information
         '''
 
-def barcodereader():
-    pass
 
 def ttswork():
     '''a working implementation of text to speech, with name detection'''
     voicerecog = VoiceRecognition()
-    
-
-    # notes for work next week
-    # text to speech working more approximately [works ish]
-    # barcode reader (probs easier)
-    # read and intro data from text files (easy time)
     voice = str(VoiceGet().run(sleepTime=2))
     print(voice)
     peoplelist = ["Name","Matt","Sarah","Jamie","John","Dale", "Alex"] ##TODO giant list of names
@@ -684,10 +704,29 @@ def ttswork():
             if li[0] != "Name":
                 return li
 
-
+def detecttouch(deflist=None):
+    try:
+        global ReactToTouch
+        ReactToTouch = TouchDetect("ReactToTouch",deflist)
+        print("Done")
+        while True:
+            pass
+    except:
+        ReactToTouch.end()
 
 def main():
     '''Programs main, contains demo program + currently not working programs'''
-    Demonstrations().entrance()
+    #BarCodeReader().run()
+    
+    #detecttouch([[ttswork,"head"]])
+
+    #ViewVideo().run()
+    #ttswork().run("hello")
+    Demonstrations().startup(False)
+    # notes for work next week
+    # text to speech working more approximately [works ish]
+    # barcode reader (probs easier)
+    # read and intro data from text files (easy time)
 if __name__ == "__main__":
+    UpgradedBot()
     main()
